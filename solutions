@@ -1,0 +1,191 @@
+# ElizaAI Agent - Architecture Proposal for Legacy OS Support
+
+## Problem Analysis
+
+The core issue stems from `onnxruntime-node` binary compatibility with older MacOS versions. This affects the agent through multiple dependency paths:
+
+1. Direct dependencies:
+   - @huggingface/transformers (requires onnxruntime-node ^1.14.0)
+   - fastembed (optionally requires onnxruntime-node ^1.20.1)
+
+2. System constraints:
+   - MacOS 11.7.9 (Big Sur) lacks newer C++ standard library features
+   - Hardware limitations prevent OS upgrades
+
+## Proposed Solution Architecture
+
+### 1. ML Backend Abstraction Layer
+
+Create an abstraction layer for ML operations that can switch between different backends:
+
+```typescript
+interface MLBackend {
+  loadModel(path: string): Promise<Model>;
+  runInference(input: Tensor): Promise<Tensor>;
+  isSupported(): boolean;
+}
+
+class OnnxRuntimeBackend implements MLBackend {
+  async isSupported(): Promise<boolean> {
+    try {
+      await import('onnxruntime-node');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+class WebMLBackend implements MLBackend {
+  async isSupported(): Promise<boolean> {
+    return typeof window !== 'undefined' && 'ml' in window;
+  }
+}
+```
+
+### 2. Tiered Feature Implementation
+
+Implement features in tiers with graceful degradation:
+
+1. Tier 1 (Basic) - No ML Required
+   - Basic chat functionality
+   - Rule-based responses
+   - Pattern matching
+
+2. Tier 2 (Enhanced) - Web ML
+   - Browser-based inference
+   - Lightweight models
+   - WebAssembly acceleration
+
+3. Tier 3 (Full) - Native ML
+   - Full onnxruntime-node capability
+   - All ML features enabled
+
+### 3. Package Structure Changes
+
+```
+eliza-ai/
+├── packages/
+│   ├── core/                 # ML-agnostic core functionality
+│   ├── ml-interfaces/        # Abstract ML interfaces
+│   ├── ml-web/              # Web-based ML implementation
+│   ├── ml-native/           # Native ML implementation (optional)
+│   └── agent/               # Main agent package
+└── pnpm-workspace.yaml
+```
+
+### 4. Dependency Management Strategy
+
+1. Move ML dependencies to optional:
+```json
+{
+  "optionalDependencies": {
+    "onnxruntime-node": "^1.14.0"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": "^4.0.0"
+  }
+}
+```
+
+2. Implement runtime feature detection:
+```typescript
+async function detectMLCapabilities() {
+  const capabilities = {
+    native: false,
+    web: false,
+    basic: true
+  };
+  
+  try {
+    const ort = await import('onnxruntime-node');
+    capabilities.native = true;
+  } catch {}
+  
+  if (typeof window !== 'undefined' && 'ml' in window) {
+    capabilities.web = true;
+  }
+  
+  return capabilities;
+}
+```
+
+### 5. Configuration System
+
+```typescript
+interface ElizaConfig {
+  mlBackend: 'native' | 'web' | 'basic';
+  enabledFeatures: Set<string>;
+  modelPaths: {
+    lightweight?: string;
+    full?: string;
+  };
+}
+
+class ElizaAgent {
+  private config: ElizaConfig;
+  private mlBackend: MLBackend;
+  
+  async initialize() {
+    const capabilities = await detectMLCapabilities();
+    this.mlBackend = await this.selectBackend(capabilities);
+    this.enableFeatures(capabilities);
+  }
+}
+```
+
+## Implementation Plan
+
+1. Phase 1: Abstraction Layer
+   - Create ML interface definitions
+   - Implement feature detection
+   - Build basic configuration system
+
+2. Phase 2: Web Backend
+   - Port critical ML operations to web-based alternatives
+   - Implement lightweight model variants
+   - Add WebAssembly optimizations
+
+3. Phase 3: Legacy Support
+   - Test on various OS versions
+   - Document compatibility matrix
+   - Create upgrade guides
+
+4. Phase 4: Migration Tools
+   - Provide migration scripts
+   - Add compatibility checking tools
+   - Create testing harness
+
+## Compatibility Matrix
+
+| Feature | Basic Tier | Web ML | Native ML |
+|---------|------------|---------|-----------|
+| Chat | ✅ | ✅ | ✅ |
+| Pattern Matching | ✅ | ✅ | ✅ |
+| Embeddings | ❌ | ✅ | ✅ |
+| Large Models | ❌ | ⚠️ | ✅ |
+| Real-time Processing | ✅ | ⚠️ | ✅ |
+
+## Migration Guide
+
+1. For existing installations:
+   ```bash
+   # Check compatibility
+   npx eliza-compat-check
+   
+   # Install appropriate dependencies
+   pnpm install --config.mlBackend=web
+   ```
+
+2. For new installations:
+   ```bash
+   # Initialize with compatibility mode
+   pnpm create eliza-ai --compatibility=legacy
+   ```
+
+## Next Steps
+
+1. Create proof-of-concept implementation of ML abstraction layer
+2. Test Web ML alternatives for critical features
+3. Develop compatibility checking tools
+4. Update documentation and development guides
