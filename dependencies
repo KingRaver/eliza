@@ -1,0 +1,45 @@
+# MacOS Compatibility Issue with ElizaAI Agent
+
+## Core Issue
+When attempting to run the ElizaAI agent on MacOS 11.7.9 (Big Sur), we're encountering compatibility issues with `onnxruntime-node`. The error occurs because the binary is built for MacOS 13.3 (Ventura) and isn't backward compatible.
+
+## Specific Error
+```
+Error: dlopen(...onnxruntime_binding.node): Symbol not found: __ZNKSt3__115basic_stringbufIcNS_11char_traitsIcEENS_9allocatorIcEEE3strEv
+Referenced from: .../libonnxruntime.1.20.1.dylib (which was built for Mac OS X 13.3)
+Expected in: /usr/lib/libc++.1.dylib
+```
+
+## Attempted Solutions
+1. Tried using an older version of onnxruntime-node (1.14.0)
+2. Attempted to override onnxruntime-node with onnxruntime-web using pnpm overrides
+3. Removed direct dependency from agent package.json
+
+## Current Project Structure
+- Using pnpm workspaces
+- Node.js version 23.3.0
+- Multiple packages including ML-related ones that might depend on onnxruntime:
+  - @huggingface/transformers
+  - fastembed
+  - echogarden
+
+## Next Steps for Investigation
+1. Need to identify which package(s) are actually requiring onnxruntime
+2. Consider alternatives:
+   - Patching packages to use different ML backends
+   - Disabling functionality that requires onnxruntime
+   - Finding alternative packages with better backward compatibility
+
+## For Developers
+When building agents for older machines, consider:
+1. Using web-based alternatives to native ML libraries
+2. Implementing feature detection/graceful degradation for ML features
+3. Providing configuration options to disable ML-dependent features
+4. Building with broader OS compatibility in mind (not just latest versions)
+
+## Current System Details
+- MacOS: 11.7.9 (Big Sur)
+- Node: v23.3.0
+- Hardware: Unable to upgrade beyond MacOS 11 due to age limitations
+
+Feel free to continue troubleshooting from here, or propose alternative architectures that would better support older hardware configurations.
