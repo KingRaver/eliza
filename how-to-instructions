@@ -1,0 +1,173 @@
+# Setting Up Your Twitter Bot with Claude
+
+## Prerequisites
+- macOS Big Sur or later
+- Python 3.8 or later
+- Terminal access
+- Text editor (e.g., VSCode, Sublime Text)
+
+## Step 1: Set Up Development Environment
+
+1. Open Terminal and create a new directory for your project:
+```bash
+mkdir twitter-claude-bot
+cd twitter-claude-bot
+```
+
+2. Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install required packages:
+```bash
+pip install tweepy anthropic python-dotenv
+```
+
+## Step 2: Get Twitter (X) API Credentials
+
+1. Go to the Twitter Developer Portal:
+   - Visit https://developer.twitter.com/
+   - Sign in with your Twitter account
+   - If you don't have a developer account, apply for one
+
+2. Create a new project:
+   - Click "Create Project"
+   - Name your project (e.g., "Claude Twitter Bot")
+   - Select "Development" as your environment
+   - Describe your intended use case
+
+3. Create a new app within your project:
+   - Click "Create App"
+   - Name your app
+   - Store the API keys and tokens securely:
+     * API Key
+     * API Key Secret
+     * Access Token
+     * Access Token Secret
+
+4. Configure app permissions:
+   - Go to app settings
+   - Under "User authentication settings":
+     * Enable OAuth 1.0a
+     * Enable "Read and Write" permissions
+
+## Step 3: Get Anthropic API Access
+
+1. Sign up for Anthropic API access:
+   - Visit https://console.anthropic.com/
+   - Create an account or sign in
+   - Navigate to API Keys section
+   - Generate a new API key
+   - Copy and save your API key securely
+
+## Step 4: Set Up Project Files
+
+1. Create a new file called `.env` in your project directory:
+```bash
+touch .env
+```
+
+2. Add your API credentials to `.env`:
+```plaintext
+TWITTER_API_KEY=your_api_key_here
+TWITTER_API_SECRET=your_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+3. Copy the bot code from the previous artifact into a new file:
+```bash
+touch twitter_bot.py
+```
+
+## Step 5: Configure Bot Settings
+
+1. Open `twitter_bot.py` and modify the following settings if desired:
+   - Tweet frequency (default: every 4 hours)
+   - Response length (default: max 280 characters)
+   - AI temperature (default: 0.7)
+   - Prompt templates
+   - Logging settings
+
+2. Create a logs directory:
+```bash
+mkdir logs
+```
+
+## Step 6: Test the Bot
+
+1. Run a test execution:
+```bash
+python twitter_bot.py
+```
+
+2. Check for any errors in the terminal output or logs
+
+3. Verify that:
+   - Bot can connect to Twitter API
+   - Bot can connect to Claude API
+   - Bot can post tweets
+   - Bot can respond to mentions
+
+## Step 7: Deploy the Bot (Optional)
+
+For continuous operation, you can:
+
+1. Use a process manager like `pm2`:
+```bash
+npm install -g pm2
+pm2 start twitter_bot.py --name twitter-claude-bot --interpreter python
+```
+
+2. Or create a launchd service on macOS:
+   - Create a .plist file in ~/Library/LaunchAgents/
+   - Configure it to run your bot script
+   - Load the service using `launchctl`
+
+## Troubleshooting
+
+Common issues and solutions:
+
+1. Rate Limit Errors:
+   - Check Twitter API rate limits
+   - Adjust bot timing accordingly
+   - Implement exponential backoff
+
+2. Authentication Errors:
+   - Verify all API keys are correct
+   - Check for any spaces in .env file
+   - Ensure keys have proper permissions
+
+3. Connection Errors:
+   - Check internet connection
+   - Verify API endpoints are accessible
+   - Check for any proxy requirements
+
+## Security Best Practices
+
+1. Never commit `.env` file to version control
+2. Add `.env` to `.gitignore`
+3. Regularly rotate API keys
+4. Monitor bot activity regularly
+5. Set up alerts for unusual behavior
+6. Keep all dependencies updated
+
+## Maintenance
+
+Regular maintenance tasks:
+
+1. Check logs daily for errors
+2. Update dependencies monthly
+3. Review and update prompt templates
+4. Monitor API usage and costs
+5. Backup bot data regularly
+
+## Resources
+
+- Anthropic API Documentation: https://docs.anthropic.com/
+- Twitter API Documentation: https://developer.twitter.com/en/docs
+- Tweepy Documentation: https://docs.tweepy.org/
+- Python Virtual Environments: https://docs.python.org/3/tutorial/venv.html
